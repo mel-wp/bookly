@@ -175,12 +175,19 @@ class _EmptyStepCard extends StatelessWidget {
         children: [
           Icon(icon, size: 52, color: AppTheme.primary),
           const SizedBox(height: 12),
-          Text(title, style: AppTheme.title),
+          Text(
+            title,
+            style: TextStyle(
+              color: AppTheme.title,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: AppTheme.subtitle,
+            style: TextStyle(color: AppTheme.subtitle, fontSize: 14),
           ),
         ],
       ),
@@ -240,12 +247,21 @@ class _PhotoStep extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          const Text('Adicionar foto do livro', style: AppTheme.title),
+          const Text(
+            'Adicionar foto do livro',
+            style: TextStyle(
+              color: AppTheme.title,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 6),
           const Text(
             'A função de câmera será conectada depois.',
             textAlign: TextAlign.center,
-            style: AppTheme.subtitle,
+            style: TextStyle(
+              color: AppTheme.title,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

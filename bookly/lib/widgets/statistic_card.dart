@@ -39,7 +39,7 @@ class StatisticCard extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: AppTheme.subtitle.copyWith(fontSize: 11),
+              style: TextStyle(color: AppTheme.subtitle, fontSize: 11),
             ),
           ],
         ),

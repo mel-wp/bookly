@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../core/app_theme.dart';
 import '../widgets/app_header.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/primary_button.dart';

@@ -29,7 +29,14 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               onPressed: () => Navigator.pop(context),
             )
           : null,
-      title: Text(title, style: AppTheme.pageTitle),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       actions: actions,
     );
   }

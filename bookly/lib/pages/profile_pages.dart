@@ -50,7 +50,13 @@ class ProfilePage extends StatelessWidget {
             SizedBox(height: 20),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('Histórico de Empréstimos', style: AppTheme.title),
+              child: Text(
+                'Histórico de Empréstimos',
+                style: TextStyle(
+                  color: AppTheme.title,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             SizedBox(height: 10),
             EmptyState(
@@ -60,7 +66,13 @@ class ProfilePage extends StatelessWidget {
             SizedBox(height: 20),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('Últimos empréstimos', style: AppTheme.title),
+              child: Text(
+                'Últimos empréstimos',
+                style: TextStyle(
+                  color: AppTheme.title,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             SizedBox(height: 10),
             EmptyState(

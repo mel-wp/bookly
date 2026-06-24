@@ -1,32 +1,34 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFF4054C9);
-  static const Color background = Color(0xFFF4F4F4);
+  static const Color textLight = Color(0xFF8A8A8A);
+
+  static const Color subtitle = Color(0xFF6B6B6B);
+
+  static const Color pageTitle = Color(0xFF2D2D2D);
+  static const Color background = Color(0xFFF8F5F0);
+
+  static const Color primary = Color(0xFF5B3E31);
+
+  static const Color secondary = Color(0xFFD4A373);
+
+  static const Color success = Color(0xFF4CAF50);
+
+  static const Color warning = Color(0xFFFF9800);
+
+  static const Color danger = Color(0xFFE53935);
+
   static const Color card = Colors.white;
 
-  static const Color success = Color(0xFF2ECC71);
-  static const Color warning = Color(0xFFFF8A3D);
-  static const Color danger = Color(0xFFE74C3C);
+  static const Color border = Color(0xFFE5DDD5);
 
-  static const Color textDark = Color(0xFF222222);
-  static const Color textLight = Color(0xFF777777);
-  static const Color today = Color(0xFF4054C9); //tirar depois talvez
-  static const Color border = Color(0xFFE0E0E0);
+  static const Color title = Color(0xFF2D2D2D);
 
-  static const TextStyle pageTitle = TextStyle(
-    color: Colors.white,
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
+  static const Color today = Color(0xFF795548);
+
+  static ThemeData lightTheme = ThemeData(
+    useMaterial3: true,
+    scaffoldBackgroundColor: background,
+    colorScheme: ColorScheme.fromSeed(seedColor: primary),
   );
-
-  static const TextStyle title = TextStyle(
-    color: textDark,
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-  );
-
-  static const TextStyle subtitle = TextStyle(color: textLight, fontSize: 13);
-
-  static const TextStyle body = TextStyle(color: textDark, fontSize: 14);
 }

@@ -30,7 +30,14 @@ class DeadlinesPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            const Text('Próximas devoluções', style: AppTheme.title),
+            Text(
+              'Próximas devoluções',
+              style: TextStyle(
+                color: AppTheme.title,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 10),
             const EmptyState(
               message: 'Nenhuma devolução próxima.',
