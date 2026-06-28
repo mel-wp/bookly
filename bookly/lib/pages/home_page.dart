@@ -7,8 +7,8 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const background = Color(0xFFF8F5F0);
-    const primary = Color(0xFF5B3E31);
-    const accent = Color(0xFFD4A373);
+    const primary = Color.fromARGB(255, 62, 31, 87);
+    const accent = Color.fromARGB(255, 187, 139, 245);
 
     return Scaffold(
       backgroundColor: background,
@@ -149,8 +149,8 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 15),
 
               _loanCard(
-                name: "Ana Clara",
-                book: "O Alquimista",
+                name: "Clara Paludo",
+                book: "A Revolução dos Bichos",
                 status: "Pendente",
                 statusColor: Colors.orange,
               ),
@@ -158,7 +158,7 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 12),
 
               _loanCard(
-                name: "Bruno Santos",
+                name: "Sophia Mileski",
                 book: "1984",
                 status: "Devolvido",
                 statusColor: Colors.green,
@@ -193,21 +193,21 @@ class HomePage extends StatelessWidget {
                   children: const [
                     BookCover(
                       image:
-                          "https://m.media-amazon.com/images/I/71aFt4+OTOL.jpg",
+                          "https://img.br.my-best.com/product_images/78119c9e42075cdc6b7a8f2448ff0af9.jpg?ixlib=rails-4.3.1&q=70&lossless=0&w=800&h=800&fit=clip&s=6d64ae189c0d444115b29de52eac4a90",
                     ),
 
                     SizedBox(width: 12),
 
                     BookCover(
                       image:
-                          "https://m.media-amazon.com/images/I/81h4CdNxdJL.jpg",
+                          "https://http2.mlstatic.com/D_NQ_NP_812454-MLA94687199899_102025-O.webp",
                     ),
 
                     SizedBox(width: 12),
 
                     BookCover(
                       image:
-                          "https://m.media-amazon.com/images/I/91dSMhdIzTL.jpg",
+                          "https://m.media-amazon.com/images/I/81LTEfXYgcL.jpg",
                     ),
                   ],
                 ),
