@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const background = Color(0xFFF8F5F0);
+  // Fundo estilo papel digital
+  static const background = Color(0xFFF4F8FC);
 
-  static const primary = Color.fromARGB(255, 209, 90, 166);
+  // Azul principal da biblioteca
+  static const primary = Color(0xFF12304A);
 
-  static const secondary = Color.fromARGB(255, 225, 9, 121);
+  // Azul de destaque
+  static const secondary = Color(0xFF4A90C2);
 
-  static const text = Color(0xFF2D2D2D);
+  // Texto principal
+  static const text = Color(0xFF2D3E50);
 
+  // Branco dos cards
   static const white = Colors.white;
 }

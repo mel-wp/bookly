@@ -5,8 +5,8 @@ import '../widgets/app_header.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/app_bottom_navigation.dart';
 
-class BookDetailPage extends StatelessWidget {
-  const BookDetailPage({super.key});
+class BookPage extends StatelessWidget {
+  const BookPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +133,7 @@ class BookDetailPage extends StatelessWidget {
 
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.secondary,
+                  backgroundColor: const Color.fromARGB(243, 93, 107, 229),
 
                   padding: const EdgeInsets.all(16),
 

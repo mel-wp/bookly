@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../pages/book_page.dart';
+import '../core/app_colors.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const background = Color(0xFFF8F5F0);
-    const primary = Color.fromARGB(255, 62, 31, 87);
-    const accent = Color.fromARGB(255, 187, 139, 245);
-
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.background,
 
       bottomNavigationBar: NavigationBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         selectedIndex: 0,
-        indicatorColor: accent.withOpacity(.3),
+        indicatorColor: AppColors.secondary.withValues(alpha: .3),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
@@ -58,7 +55,7 @@ class HomePage extends StatelessWidget {
                         style: GoogleFonts.playfairDisplay(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
-                          color: primary,
+                          color: AppColors.primary,
                         ),
                       ),
 
@@ -92,7 +89,7 @@ class HomePage extends StatelessWidget {
                   hintText: "Buscar livros...",
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.white,
 
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(18),
@@ -110,7 +107,7 @@ class HomePage extends StatelessWidget {
                     child: _StatCard(
                       title: "Total",
                       value: "12",
-                      color: primary,
+                      color: AppColors.primary,
                     ),
                   ),
 
@@ -243,7 +240,7 @@ class HomePage extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: const Color(0xFFD4A373),
+            backgroundColor: AppColors.secondary,
             child: Text(name[0]),
           ),
 
@@ -338,7 +335,7 @@ class BookCover extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const BookDetailPage()),
+          MaterialPageRoute(builder: (context) => const BookPage()),
         );
       },
 
