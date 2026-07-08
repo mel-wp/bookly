@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../pages/book_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -190,10 +191,12 @@ class HomePage extends StatelessWidget {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
 
-                  children: const [
+                  children: [
                     BookCover(
                       image:
                           "https://img.br.my-best.com/product_images/78119c9e42075cdc6b7a8f2448ff0af9.jpg?ixlib=rails-4.3.1&q=70&lossless=0&w=800&h=800&fit=clip&s=6d64ae189c0d444115b29de52eac4a90",
+                      title: "Amor, teoricamente",
+                      author: "Ali Hazelwood",
                     ),
 
                     SizedBox(width: 12),
@@ -201,6 +204,8 @@ class HomePage extends StatelessWidget {
                     BookCover(
                       image:
                           "https://http2.mlstatic.com/D_NQ_NP_812454-MLA94687199899_102025-O.webp",
+                      title: "Patinando no Amor",
+                      author: "Lynn Painter",
                     ),
 
                     SizedBox(width: 12),
@@ -208,6 +213,8 @@ class HomePage extends StatelessWidget {
                     BookCover(
                       image:
                           "https://m.media-amazon.com/images/I/81LTEfXYgcL.jpg",
+                      title: "A Hipótese do Amor",
+                      author: "Ali Hazelwood",
                     ),
                   ],
                 ),
@@ -315,28 +322,46 @@ class _StatCard extends StatelessWidget {
 
 class BookCover extends StatelessWidget {
   final String image;
+  final String title;
+  final String author;
 
-  const BookCover({super.key, required this.image});
+  const BookCover({
+    super.key,
+    required this.image,
+    required this.title,
+    required this.author,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 120,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const BookDetailPage()),
+        );
+      },
 
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            blurRadius: 10,
-            offset: Offset(0, 4),
-            color: Colors.black12,
-          ),
-        ],
-      ),
+      child: Container(
+        width: 120,
 
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: Image.network(image, fit: BoxFit.cover),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 10,
+              offset: Offset(0, 4),
+              color: Colors.black12,
+            ),
+          ],
+        ),
+
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+
+          child: Image.network(image, fit: BoxFit.cover),
+        ),
       ),
     );
   }
