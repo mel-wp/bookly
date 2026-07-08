@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../pages/book_page.dart';
 import '../core/app_colors.dart';
 
@@ -52,10 +51,11 @@ class HomePage extends StatelessWidget {
                     children: [
                       Text(
                         "Minha Biblioteca",
-                        style: GoogleFonts.playfairDisplay(
+                        style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
+                          letterSpacing: 0.5,
                         ),
                       ),
 
@@ -63,7 +63,7 @@ class HomePage extends StatelessWidget {
 
                       Text(
                         "Bem-vinda de volta 📚",
-                        style: GoogleFonts.poppins(color: Colors.grey[700]),
+                        style: TextStyle(color: Colors.grey[700], fontSize: 15),
                       ),
                     ],
                   ),
@@ -138,9 +138,10 @@ class HomePage extends StatelessWidget {
               /// EMPRÉSTIMOS
               Text(
                 "Empréstimos Recentes",
-                style: GoogleFonts.playfairDisplay(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
                 ),
               ),
 
@@ -170,9 +171,10 @@ class HomePage extends StatelessWidget {
                 children: [
                   Text(
                     "Sugestões para você",
-                    style: GoogleFonts.playfairDisplay(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
                     ),
                   ),
 
