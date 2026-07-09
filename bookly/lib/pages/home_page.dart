@@ -3,8 +3,17 @@ import '../pages/book_page.dart';
 import '../core/app_colors.dart';
 import '../widgets/app_bottom_navigation.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final TextEditingController searchController = TextEditingController();
+
+  String search = "";
 
   @override
   Widget build(BuildContext context) {

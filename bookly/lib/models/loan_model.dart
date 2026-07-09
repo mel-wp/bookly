@@ -2,10 +2,10 @@ import 'book_model.dart';
 import 'friend_model.dart';
 
 class LoanModel {
-  final BookModel book;
-  final FriendModel friend;
-  final DateTime loanDate;
-  final DateTime returnDate;
+  BookModel book;
+  FriendModel friend;
+  DateTime loanDate;
+  DateTime returnDate;
   bool returned;
 
   LoanModel({

@@ -1,10 +1,10 @@
 class BookModel {
-  final String title;
-  final String author;
-  final String image;
-  final String year;
-  final String category;
-  final String description;
+  String title;
+  String author;
+  String image;
+  String year;
+  String category;
+  String description;
   bool available;
 
   BookModel({

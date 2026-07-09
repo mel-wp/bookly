@@ -1,6 +1,6 @@
 class FriendModel {
-  final String name;
-  final String phone;
+  String name;
+  String email;
 
-  FriendModel({required this.name, required this.phone});
+  FriendModel({required this.name, required this.email});
 }
