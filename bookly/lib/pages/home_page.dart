@@ -193,27 +193,42 @@ class HomePage extends StatelessWidget {
                   children: [
                     BookCover(
                       image:
-                          "https://img.br.my-best.com/product_images/78119c9e42075cdc6b7a8f2448ff0af9.jpg?ixlib=rails-4.3.1&q=70&lossless=0&w=800&h=800&fit=clip&s=6d64ae189c0d444115b29de52eac4a90",
-                      title: "Amor, teoricamente",
+                          "https://img.br.my-best.com/product_images/78119c9e42075cdc6b7a8f2448ff0af9.jpg",
+                      title: "Amor, Teoricamente",
                       author: "Ali Hazelwood",
+                      year: "2023",
+                      category: "Romance",
+                      status: "Disponível",
+                      description:
+                          "Uma história de romance entre dois pesquisadores acadêmicos.",
                     ),
 
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
 
                     BookCover(
                       image:
                           "https://http2.mlstatic.com/D_NQ_NP_812454-MLA94687199899_102025-O.webp",
                       title: "Patinando no Amor",
                       author: "Lynn Painter",
+                      year: "2022",
+                      category: "Romance",
+                      status: "Emprestado",
+                      description:
+                          "Uma história leve sobre amor, amizade e descobertas.",
                     ),
 
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
 
                     BookCover(
                       image:
                           "https://m.media-amazon.com/images/I/81LTEfXYgcL.jpg",
                       title: "A Hipótese do Amor",
                       author: "Ali Hazelwood",
+                      year: "2021",
+                      category: "Romance",
+                      status: "Disponível",
+                      description:
+                          "Uma pesquisadora se envolve em uma situação inesperada.",
                     ),
                   ],
                 ),
@@ -323,12 +338,20 @@ class BookCover extends StatelessWidget {
   final String image;
   final String title;
   final String author;
+  final String year;
+  final String category;
+  final String description;
+  final String status;
 
   const BookCover({
     super.key,
     required this.image,
     required this.title,
     required this.author,
+    required this.year,
+    required this.category,
+    required this.description,
+    required this.status,
   });
 
   @override
@@ -337,24 +360,24 @@ class BookCover extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const BookPage()),
+          MaterialPageRoute(
+            builder: (context) => BookDetailPage(
+              title: title,
+              author: author,
+              image: image,
+              year: year,
+              category: category,
+              status: status,
+              description: description,
+            ),
+          ),
         );
       },
 
       child: Container(
         width: 120,
 
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-
-          boxShadow: const [
-            BoxShadow(
-              blurRadius: 10,
-              offset: Offset(0, 4),
-              color: Colors.black12,
-            ),
-          ],
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
 
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),

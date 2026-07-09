@@ -5,8 +5,25 @@ import '../widgets/app_header.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/app_bottom_navigation.dart';
 
-class BookPage extends StatelessWidget {
-  const BookPage({super.key});
+class BookDetailPage extends StatelessWidget {
+  final String title;
+  final String author;
+  final String image;
+  final String year;
+  final String category;
+  final String description;
+  final String status;
+
+  const BookDetailPage({
+    super.key,
+    required this.title,
+    required this.author,
+    required this.image,
+    required this.year,
+    required this.category,
+    required this.description,
+    required this.status,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,18 +57,14 @@ class BookPage extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
 
-                child: Image.network(
-                  "https://img.br.my-best.com/product_images/78119c9e42075cdc6b7a8f2448ff0af9.jpg?ixlib=rails-4.3.1&q=70&lossless=0&w=800&h=800&fit=clip&s=6d64ae189c0d444115b29de52eac4a90",
-
-                  fit: BoxFit.cover,
-                ),
+                child: Image.network(image, fit: BoxFit.cover),
               ),
             ),
 
             const SizedBox(height: 25),
 
             Text(
-              "Amor, teoricamente",
+              title,
 
               style: TextStyle(
                 color: AppTheme.title,
@@ -65,14 +78,14 @@ class BookPage extends StatelessWidget {
             const SizedBox(height: 8),
 
             Text(
-              "Ali Hazelwood",
+              author,
 
               style: TextStyle(color: AppTheme.subtitle, fontSize: 16),
             ),
 
             const SizedBox(height: 20),
 
-            StatusChip(text: "Disponível", color: AppTheme.success),
+            StatusChip(text: status, color: AppTheme.success),
 
             const SizedBox(height: 25),
 
@@ -108,18 +121,21 @@ class BookPage extends StatelessWidget {
                   const SizedBox(height: 15),
 
                   Text(
-                    "Autor: Ali Hazelwood",
+                    "Autor: $author",
                     style: TextStyle(color: AppTheme.subtitle),
                   ),
 
                   const SizedBox(height: 8),
 
-                  Text("Ano: 2022", style: TextStyle(color: AppTheme.subtitle)),
+                  Text(
+                    "Ano: $year",
+                    style: TextStyle(color: AppTheme.subtitle),
+                  ),
 
                   const SizedBox(height: 8),
 
                   Text(
-                    "Categoria: Romance",
+                    "Categoria: $category",
                     style: TextStyle(color: AppTheme.subtitle),
                   ),
                 ],
