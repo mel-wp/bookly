@@ -32,6 +32,14 @@ class _NewLoanPageState extends State<NewLoanPage> {
     }
   }
 
+  void finalizarEmprestimo() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Empréstimo realizado com sucesso!")),
+    );
+
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,7 +72,13 @@ class _NewLoanPageState extends State<NewLoanPage> {
                 Expanded(
                   child: PrimaryButton(
                     text: currentStep == 3 ? 'Finalizar' : 'Próximo',
-                    onPressed: nextStep,
+                    onPressed: () {
+                      if (currentStep == 3) {
+                        finalizarEmprestimo();
+                      } else {
+                        nextStep();
+                      }
+                    },
                   ),
                 ),
               ],

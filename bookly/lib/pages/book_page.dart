@@ -4,6 +4,7 @@ import '../core/app_theme.dart';
 import '../widgets/app_header.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/app_bottom_navigation.dart';
+import 'new_loan_page.dart';
 
 class BookDetailPage extends StatelessWidget {
   final String title;
@@ -158,7 +159,14 @@ class BookDetailPage extends StatelessWidget {
                   ),
                 ),
 
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NewLoanPage(),
+                    ),
+                  );
+                },
 
                 child: const Text(
                   "Solicitar empréstimo",

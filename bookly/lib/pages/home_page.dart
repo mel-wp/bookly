@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../pages/book_page.dart';
 import '../core/app_colors.dart';
+import '../widgets/app_bottom_navigation.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -9,31 +10,6 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: AppColors.white,
-        selectedIndex: 0,
-        indicatorColor: AppColors.secondary.withValues(alpha: .3),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: "Início",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            label: "Amigos",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            label: "Prazos",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            label: "Perfil",
-          ),
-        ],
-      ),
 
       body: SafeArea(
         child: SingleChildScrollView(
@@ -237,6 +213,7 @@ class HomePage extends StatelessWidget {
           ),
         ),
       ),
+      bottomNavigationBar: const AppBottomNavigation(currentIndex: 0),
     );
   }
 
@@ -278,7 +255,7 @@ class HomePage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
 
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(.15),
+              color: statusColor.withValues(alpha: .15),
               borderRadius: BorderRadius.circular(20),
             ),
 

@@ -4,7 +4,6 @@ import '../widgets/expandable_friend_card.dart';
 import '../core/app_theme.dart';
 import '../widgets/app_bottom_navigation.dart';
 import '../widgets/app_header.dart';
-import '../widgets/empty_state.dart';
 
 class FriendsPage extends StatelessWidget {
   const FriendsPage({super.key});
