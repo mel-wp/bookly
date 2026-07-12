@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../core/app_theme.dart';
-import '../widgets/app_header.dart';
-import '../widgets/primary_button.dart';
+import '../core/app_colors.dart';
+import '../services/books_service.dart';
+import '../services/friends_services.dart';
+import '../services/loans_service.dart';
+import '../services/session_service.dart';
 
 class NewLoanPage extends StatefulWidget {
   const NewLoanPage({super.key});
@@ -12,163 +14,473 @@ class NewLoanPage extends StatefulWidget {
 }
 
 class _NewLoanPageState extends State<NewLoanPage> {
-  int currentStep = 0;
+  bool isLoading = true;
+  bool isSaving = false;
+  String? errorMessage;
 
-  void nextStep() {
-    if (currentStep < 3) {
+  List<Map<String, dynamic>> friends = [];
+  List<Map<String, dynamic>> books = [];
+
+  Map<String, dynamic>? selectedFriend;
+  Map<String, dynamic>? selectedBook;
+  DateTime? selectedDueDate;
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final userId = await SessionService.getCurrentUserId();
+
+      final loadedFriends = await FriendsService.listFriends(userId: userId);
+      final loadedBooks = await BooksService.listBooks(
+        userId: userId,
+        available: true,
+      );
+
+      if (!mounted) return;
+
       setState(() {
-        currentStep++;
+        friends = loadedFriends;
+        books = loadedBooks;
+        isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        errorMessage = error.toString();
+        isLoading = false;
       });
     }
   }
 
-  void previousStep() {
-    if (currentStep > 0) {
-      setState(() {
-        currentStep--;
-      });
-    } else {
-      Navigator.pop(context);
-    }
-  }
+  Future<void> pickDueDate() async {
+    final today = DateTime.now();
 
-  void finalizarEmprestimo() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Empréstimo realizado com sucesso!")),
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: today.add(const Duration(days: 7)),
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
     );
 
-    Navigator.pop(context);
+    if (pickedDate == null) return;
+
+    setState(() {
+      selectedDueDate = pickedDate;
+    });
+  }
+
+  Future<void> saveLoan() async {
+    if (selectedFriend == null) {
+      showMessage('Selecione um amigo.');
+      return;
+    }
+
+    if (selectedBook == null) {
+      showMessage('Selecione um livro.');
+      return;
+    }
+
+    if (selectedDueDate == null) {
+      showMessage('Selecione o prazo de devolução.');
+      return;
+    }
+
+    setState(() {
+      isSaving = true;
+    });
+
+    try {
+      final userId = await SessionService.getCurrentUserId();
+
+      await LoansService.createLoan(
+        userId: userId,
+        friendId: selectedFriend!['id'].toString(),
+        bookId: selectedBook!['id'].toString(),
+        dueDate: selectedDueDate!,
+        loanDate: DateTime.now(),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Empréstimo cadastrado com sucesso!'),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao cadastrar empréstimo: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
+    }
+  }
+
+  void showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
+
+  String formatDate(DateTime? date) {
+    if (date == null) {
+      return 'Selecionar prazo';
+    }
+
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+
+    return '$day/$month/$year';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AppHeader(title: 'Novo Empréstimo', showBackButton: true),
-      body: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Novo Empréstimo'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : errorMessage != null
+                ? buildErrorState()
+                : buildContent(),
+      ),
+    );
+  }
+
+  Widget buildContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildSectionTitle('1. Escolha o amigo'),
+          const SizedBox(height: 12),
+          buildFriendsList(),
+          const SizedBox(height: 28),
+          buildSectionTitle('2. Escolha o livro'),
+          const SizedBox(height: 12),
+          buildBooksList(),
+          const SizedBox(height: 28),
+          buildSectionTitle('3. Defina o prazo'),
+          const SizedBox(height: 12),
+          buildDateCard(),
+          const SizedBox(height: 30),
+          buildSaveButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        color: AppColors.primary,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget buildFriendsList() {
+    if (friends.isEmpty) {
+      return const _EmptyCard(
+        icon: Icons.people_outline,
+        title: 'Nenhum amigo cadastrado',
+        description:
+            'Cadastre um amigo antes de criar um empréstimo.',
+      );
+    }
+
+    return Column(
+      children: friends.map((friend) {
+        final name = friend['name']?.toString() ?? 'Sem nome';
+        final email = friend['email']?.toString();
+        final isSelected = selectedFriend?['id'] == friend['id'];
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              setState(() {
+                selectedFriend = friend;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: AppColors.secondary,
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (email != null && email.trim().isNotEmpty)
+                          Text(
+                            email,
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 13,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (isSelected)
+                    Icon(
+                      Icons.check_circle,
+                      color: AppColors.primary,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget buildBooksList() {
+    if (books.isEmpty) {
+      return const _EmptyCard(
+        icon: Icons.menu_book_outlined,
+        title: 'Nenhum livro disponível',
+        description:
+            'Cadastre um livro ou aguarde a devolução de algum livro emprestado.',
+      );
+    }
+
+    return Column(
+      children: books.map((book) {
+        final title = book['title']?.toString() ?? 'Sem título';
+        final author = book['author']?.toString() ?? 'Autor não informado';
+        final category = book['category']?.toString();
+        final isSelected = selectedBook?['id'] == book['id'];
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              setState(() {
+                selectedBook = book;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.menu_book_outlined,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          author,
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 13,
+                          ),
+                        ),
+                        if (category != null && category.trim().isNotEmpty)
+                          Text(
+                            category,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (isSelected)
+                    Icon(
+                      Icons.check_circle,
+                      color: AppColors.primary,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget buildDateCard() {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: pickDueDate,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selectedDueDate == null
+                ? Colors.transparent
+                : AppColors.primary,
+            width: 2,
+          ),
+        ),
+        child: Row(
           children: [
-            _LoanStepper(currentStep: currentStep),
-            const SizedBox(height: 24),
+            Icon(
+              Icons.calendar_month_outlined,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: 12),
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: _StepContent(
-                  key: ValueKey(currentStep),
-                  step: currentStep,
+              child: Text(
+                formatDate(selectedDueDate),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            Row(
-              children: [
-                Expanded(
-                  child: PrimaryButton(
-                    text: 'Voltar',
-                    outlined: true,
-                    onPressed: previousStep,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: PrimaryButton(
-                    text: currentStep == 3 ? 'Finalizar' : 'Próximo',
-                    onPressed: () {
-                      if (currentStep == 3) {
-                        finalizarEmprestimo();
-                      } else {
-                        nextStep();
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
+            const Icon(Icons.chevron_right),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildSaveButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton.icon(
+        onPressed: isSaving ? null : saveLoan,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        icon: isSaving
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.check),
+        label: Text(
+          isSaving ? 'Salvando...' : 'Confirmar empréstimo',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: _EmptyCard(
+          icon: Icons.error_outline,
+          title: 'Erro ao carregar dados',
+          description:
+              'Verifique se o backend está rodando em http://localhost:3000.\n\n$errorMessage',
         ),
       ),
     );
   }
 }
 
-class _LoanStepper extends StatelessWidget {
-  final int currentStep;
-
-  const _LoanStepper({required this.currentStep});
-
-  @override
-  Widget build(BuildContext context) {
-    final steps = ['Amigo', 'Livro', 'Prazo', 'Foto'];
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(steps.length, (index) {
-        final bool active = index <= currentStep;
-
-        return Column(
-          children: [
-            CircleAvatar(
-              radius: 17,
-              backgroundColor: active ? AppTheme.primary : Colors.grey.shade300,
-              child: Text(
-                '${index + 1}',
-                style: TextStyle(
-                  color: active ? Colors.white : Colors.black54,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              steps[index],
-              style: TextStyle(
-                fontSize: 11,
-                color: active ? AppTheme.primary : AppTheme.textLight,
-                fontWeight: active ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        );
-      }),
-    );
-  }
-}
-
-class _StepContent extends StatelessWidget {
-  final int step;
-
-  const _StepContent({super.key, required this.step});
-
-  @override
-  Widget build(BuildContext context) {
-    switch (step) {
-      case 0:
-        return const _EmptyStepCard(
-          icon: Icons.person_outline,
-          title: 'Selecionar amigo',
-          description: 'Nenhum amigo cadastrado para selecionar.',
-        );
-      case 1:
-        return const _EmptyStepCard(
-          icon: Icons.menu_book_outlined,
-          title: 'Selecionar livro',
-          description: 'Nenhum livro cadastrado para selecionar.',
-        );
-      case 2:
-        return const _DeadlineStep();
-      case 3:
-        return const _PhotoStep();
-      default:
-        return const SizedBox();
-    }
-  }
-}
-
-class _EmptyStepCard extends StatelessWidget {
+class _EmptyCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
 
-  const _EmptyStepCard({
+  const _EmptyCard({
     required this.icon,
     required this.title,
     required this.description,
@@ -180,101 +492,32 @@ class _EmptyStepCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 52, color: AppTheme.primary),
+          Icon(
+            icon,
+            size: 44,
+            color: AppColors.primary,
+          ),
           const SizedBox(height: 12),
           Text(
             title,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppTheme.title,
-              fontSize: 18,
+              color: AppColors.primary,
               fontWeight: FontWeight.bold,
+              fontSize: 17,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.subtitle, fontSize: 14),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DeadlineStep extends StatelessWidget {
-  const _DeadlineStep();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: CalendarDatePicker(
-        initialDate: DateTime.now(),
-        firstDate: DateTime.now(),
-        lastDate: DateTime(2035),
-        onDateChanged: (date) {},
-      ),
-    );
-  }
-}
-
-class _PhotoStep extends StatelessWidget {
-  const _PhotoStep();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            height: 130,
-            width: 130,
-            decoration: BoxDecoration(
-              color: AppTheme.background,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.border),
-            ),
-            child: const Icon(
-              Icons.camera_alt_outlined,
-              size: 52,
-              color: AppTheme.primary,
-            ),
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            'Adicionar foto do livro',
             style: TextStyle(
-              color: AppTheme.title,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'A função de câmera será conectada depois.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.title,
-              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
             ),
           ),
         ],
