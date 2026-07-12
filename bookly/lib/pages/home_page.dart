@@ -7,6 +7,7 @@ import '../services/books_service.dart';
 import '../services/loans_service.dart';
 import '../services/session_service.dart';
 import '../widgets/app_bottom_navigation.dart';
+import '../pages/new_loan_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -300,15 +301,36 @@ class _HomePageState extends State<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Empréstimos Recentes',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+        Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    Text(
+      'Empréstimos Recentes',
+      style: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: AppColors.primary,
+      ),
+    ),
+    TextButton.icon(
+      onPressed: () async {
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const NewLoanPage(),
           ),
-        ),
-        const SizedBox(height: 15),
+        );
+
+        if (result == true) {
+          await loadHomeData();
+        }
+      },
+      icon: const Icon(Icons.add),
+      label: const Text('Novo'),
+    ),
+  ],
+),
+const SizedBox(height: 15),
         if (recentLoans.isEmpty)
           const _EmptyCard(
             icon: Icons.assignment_outlined,
