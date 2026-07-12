@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'core/app_theme.dart';
+import 'pages/home_page.dart';
 
 class BooklyApp extends StatelessWidget {
   const BooklyApp({super.key});
@@ -9,12 +11,8 @@ class BooklyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bookly',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: AppTheme.background,
-        primaryColor: AppTheme.primary,
-      ),
-      home: const Scaffold(body: Center(child: Text('Bookly iniciado'))),
+      theme: AppTheme.lightTheme,
+      home: const HomePage(),
     );
   }
 }

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
-import '../pages/book_page.dart';
+
 import '../core/app_colors.dart';
+import '../pages/add_book_page.dart';
+import '../pages/book_page.dart';
+import '../services/books_service.dart';
+import '../services/loans_service.dart';
+import '../services/session_service.dart';
 import '../widgets/app_bottom_navigation.dart';
 
 class HomePage extends StatefulWidget {
@@ -13,212 +18,184 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController searchController = TextEditingController();
 
-  String search = "";
+  bool isLoading = true;
+  String search = '';
+  String? errorMessage;
+
+  List<Map<String, dynamic>> books = [];
+  List<Map<String, dynamic>> loans = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadHomeData();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadHomeData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final userId = await SessionService.getCurrentUserId();
+
+      final loadedBooks = await BooksService.listBooks(userId: userId);
+      final loadedLoans = await LoansService.listLoans(userId: userId);
+
+      if (!mounted) return;
+
+      setState(() {
+        books = loadedBooks;
+        loans = loadedLoans;
+        isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        errorMessage = error.toString();
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> openAddBookPage() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AddBookPage(),
+      ),
+    );
+
+    if (result == true) {
+      await loadHomeData();
+    }
+  }
+
+  List<Map<String, dynamic>> get filteredBooks {
+    if (search.trim().isEmpty) {
+      return books;
+    }
+
+    final searchLower = search.toLowerCase();
+
+    return books.where((book) {
+      final title = book['title']?.toString().toLowerCase() ?? '';
+      final author = book['author']?.toString().toLowerCase() ?? '';
+
+      return title.contains(searchLower) || author.contains(searchLower);
+    }).toList();
+  }
+
+  int get pendingLoans {
+    return loans.where((loan) => loan['status'] == 'PENDING').length;
+  }
+
+  int get returnedLoans {
+    return loans.where((loan) => loan['status'] == 'RETURNED').length;
+  }
+
+  Color getStatusColor(String status) {
+    switch (status) {
+      case 'RETURNED':
+        return Colors.green;
+      case 'LATE':
+        return Colors.red;
+      case 'PENDING':
+      default:
+        return Colors.orange;
+    }
+  }
+
+  String getStatusText(String status) {
+    switch (status) {
+      case 'RETURNED':
+        return 'Devolvido';
+      case 'LATE':
+        return 'Atrasado';
+      case 'PENDING':
+      default:
+        return 'Pendente';
+    }
+  }
+
+  String getBookCover(Map<String, dynamic> book) {
+    final coverUrl = book['coverUrl']?.toString();
+
+    if (coverUrl == null || coverUrl.trim().isEmpty) {
+      return 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=500';
+    }
+
+    return coverUrl;
+  }
+
+  String formatDate(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Sem prazo';
+    }
+
+    final date = DateTime.tryParse(value);
+
+    if (date == null) {
+      return 'Sem prazo';
+    }
+
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+
+    return '$day/$month/$year';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        onPressed: openAddBookPage,
+        icon: const Icon(Icons.add),
+        label: const Text('Livro'),
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// HEADER
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Minha Biblioteca",
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-
-                      const SizedBox(height: 5),
-
-                      Text(
-                        "Bem-vinda de volta 📚",
-                        style: TextStyle(color: Colors.grey[700], fontSize: 15),
-                      ),
-                    ],
-                  ),
-
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+        child: RefreshIndicator(
+          onRefresh: loadHomeData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildHeader(),
+                const SizedBox(height: 25),
+                buildSearchField(),
+                const SizedBox(height: 25),
+                if (isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 50),
+                      child: CircularProgressIndicator(),
                     ),
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.notifications_none),
-                    ),
-                  ),
+                  )
+                else if (errorMessage != null)
+                  buildErrorState()
+                else ...[
+                  buildStatistics(),
+                  const SizedBox(height: 30),
+                  buildRecentLoans(),
+                  const SizedBox(height: 30),
+                  buildBooksSection(),
                 ],
-              ),
-
-              const SizedBox(height: 25),
-
-              /// PESQUISA
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Buscar livros...",
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: AppColors.white,
-
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              /// ESTATÍSTICAS
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      title: "Total",
-                      value: "12",
-                      color: AppColors.primary,
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  Expanded(
-                    child: _StatCard(
-                      title: "Pendentes",
-                      value: "5",
-                      color: Colors.orange,
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  Expanded(
-                    child: _StatCard(
-                      title: "Devolvidos",
-                      value: "7",
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 30),
-
-              /// EMPRÉSTIMOS
-              Text(
-                "Empréstimos Recentes",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              _loanCard(
-                name: "Clara Paludo",
-                book: "A Revolução dos Bichos",
-                status: "Pendente",
-                statusColor: Colors.orange,
-              ),
-
-              const SizedBox(height: 12),
-
-              _loanCard(
-                name: "Sophia Mileski",
-                book: "1984",
-                status: "Devolvido",
-                statusColor: Colors.green,
-              ),
-
-              const SizedBox(height: 30),
-
-              /// SUGESTÕES
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Sugestões para você",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-
-                  TextButton(onPressed: () {}, child: const Text("Ver todas")),
-                ],
-              ),
-
-              const SizedBox(height: 15),
-
-              SizedBox(
-                height: 200,
-
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-
-                  children: [
-                    BookCover(
-                      image:
-                          "https://img.br.my-best.com/product_images/78119c9e42075cdc6b7a8f2448ff0af9.jpg",
-                      title: "Amor, Teoricamente",
-                      author: "Ali Hazelwood",
-                      year: "2023",
-                      category: "Romance",
-                      status: "Disponível",
-                      description:
-                          "Uma história de romance entre dois pesquisadores acadêmicos.",
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    BookCover(
-                      image:
-                          "https://http2.mlstatic.com/D_NQ_NP_812454-MLA94687199899_102025-O.webp",
-                      title: "Patinando no Amor",
-                      author: "Lynn Painter",
-                      year: "2022",
-                      category: "Romance",
-                      status: "Emprestado",
-                      description:
-                          "Uma história leve sobre amor, amizade e descobertas.",
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    BookCover(
-                      image:
-                          "https://m.media-amazon.com/images/I/81LTEfXYgcL.jpg",
-                      title: "A Hipótese do Amor",
-                      author: "Ali Hazelwood",
-                      year: "2021",
-                      category: "Romance",
-                      status: "Disponível",
-                      description:
-                          "Uma pesquisadora se envolve em uma situação inesperada.",
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -226,51 +203,267 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _loanCard({
-    required String name,
-    required String book,
-    required String status,
-    required Color statusColor,
-  }) {
+  Widget buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Minha Biblioteca',
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'Bem-vinda de volta 📚',
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: IconButton(
+            onPressed: loadHomeData,
+            icon: const Icon(Icons.refresh),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildSearchField() {
+    return TextField(
+      controller: searchController,
+      onChanged: (value) {
+        setState(() {
+          search = value;
+        });
+      },
+      decoration: InputDecoration(
+        hintText: 'Buscar livros...',
+        prefixIcon: const Icon(Icons.search),
+        filled: true,
+        fillColor: AppColors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget buildStatistics() {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            title: 'Total',
+            value: books.length.toString(),
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatCard(
+            title: 'Pendentes',
+            value: pendingLoans.toString(),
+            color: Colors.orange,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatCard(
+            title: 'Devolvidos',
+            value: returnedLoans.toString(),
+            color: Colors.green,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildRecentLoans() {
+    final recentLoans = loans.take(3).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Empréstimos Recentes',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 15),
+        if (recentLoans.isEmpty)
+          const _EmptyCard(
+            icon: Icons.assignment_outlined,
+            title: 'Nenhum empréstimo cadastrado',
+            description:
+                'Quando você emprestar um livro, ele aparecerá nesta área.',
+          )
+        else
+          ...recentLoans.map((loan) {
+            final friend = loan['friend'] as Map<String, dynamic>?;
+            final book = loan['book'] as Map<String, dynamic>?;
+
+            final friendName = friend?['name']?.toString() ?? 'Sem amigo';
+            final bookTitle = book?['title']?.toString() ?? 'Sem livro';
+            final status = loan['status']?.toString() ?? 'PENDING';
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _LoanCard(
+                name: friendName,
+                book: bookTitle,
+                status: getStatusText(status),
+                statusColor: getStatusColor(status),
+                deadline: formatDate(loan['dueDate']?.toString()),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  Widget buildBooksSection() {
+    final visibleBooks = filteredBooks;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Meus livros',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 15),
+        if (visibleBooks.isEmpty)
+          const _EmptyCard(
+            icon: Icons.menu_book_outlined,
+            title: 'Nenhum livro cadastrado',
+            description:
+                'Clique no botão “Livro” para cadastrar o primeiro livro da sua biblioteca.',
+          )
+        else
+          SizedBox(
+            height: 210,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: visibleBooks.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final book = visibleBooks[index];
+
+                return BookCover(
+                  image: getBookCover(book),
+                  title: book['title']?.toString() ?? 'Sem título',
+                  author: book['author']?.toString() ?? 'Autor não informado',
+                  year: '2026',
+                  category: book['category']?.toString() ?? 'Sem categoria',
+                  status:
+                      book['available'] == true ? 'Disponível' : 'Emprestado',
+                  description:
+                      book['description']?.toString() ?? 'Sem descrição.',
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget buildErrorState() {
+    return _EmptyCard(
+      icon: Icons.error_outline,
+      title: 'Erro ao carregar dados',
+      description:
+          'Verifique se o backend está rodando em http://localhost:3000.\n\n$errorMessage',
+    );
+  }
+}
+
+class _LoanCard extends StatelessWidget {
+  final String name;
+  final String book;
+  final String status;
+  final Color statusColor;
+  final String deadline;
+
+  const _LoanCard({
+    required this.name,
+    required this.book,
+    required this.status,
+    required this.statusColor,
+    required this.deadline,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
-
       child: Row(
         children: [
           CircleAvatar(
             backgroundColor: AppColors.secondary,
-            child: Text(name[0]),
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-
+                Text(
+                  name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 Text(book),
+                Text(
+                  'Prazo: $deadline',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
-
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: .15),
               borderRadius: BorderRadius.circular(20),
             ),
-
             child: Text(
               status,
-              style: TextStyle(color: statusColor, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: statusColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -294,12 +487,10 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
-
       child: Column(
         children: [
           Text(
@@ -310,10 +501,59 @@ class _StatCard extends StatelessWidget {
               color: color,
             ),
           ),
-
           const SizedBox(height: 5),
-
           Text(title),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+
+  const _EmptyCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 44,
+            color: AppColors.primary,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 17,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[700],
+            ),
+          ),
         ],
       ),
     );
@@ -347,28 +587,41 @@ class BookCover extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BookDetailPage(
-              title: title,
-              author: author,
-              image: image,
-              year: year,
-              category: category,
-              status: status,
-              description: description,
-            ),
+            builder: (context) =>
+                BookDetailPage(
+                  title: title,
+                  author: author,
+                  image: image,
+                  year: year,
+                  category: category,
+                  status: status,
+                  description: description,
+                ),
           ),
         );
       },
-
       child: Container(
-        width: 120,
-
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
-
+        width: 125,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
-
-          child: Image.network(image, fit: BoxFit.cover),
+          child: Image.network(
+            image,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) {
+              return Container(
+                color: Colors.white,
+                child: Icon(
+                  Icons.menu_book_outlined,
+                  color: AppColors.primary,
+                  size: 42,
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
