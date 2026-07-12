@@ -413,16 +413,15 @@ const SizedBox(height: 15),
                 final book = visibleBooks[index];
 
                 return BookCover(
-                  image: getBookCover(book),
-                  title: book['title']?.toString() ?? 'Sem título',
-                  author: book['author']?.toString() ?? 'Autor não informado',
-                  year: '2026',
-                  category: book['category']?.toString() ?? 'Sem categoria',
-                  status:
-                      book['available'] == true ? 'Disponível' : 'Emprestado',
-                  description:
-                      book['description']?.toString() ?? 'Sem descrição.',
-                );
+  bookId: book['id'].toString(),
+  image: getBookCover(book),
+  title: book['title']?.toString() ?? 'Sem título',
+  author: book['author']?.toString() ?? 'Autor não informado',
+  year: '2026',
+  category: book['category']?.toString() ?? 'Sem categoria',
+  status: book['available'] == true ? 'Disponível' : 'Emprestado',
+  description: book['description']?.toString() ?? 'Sem descrição.',
+);
               },
             ),
           ),
@@ -608,17 +607,19 @@ class BookCover extends StatelessWidget {
   final String category;
   final String description;
   final String status;
+  final String bookId;
 
   const BookCover({
-    super.key,
-    required this.image,
-    required this.title,
-    required this.author,
-    required this.year,
-    required this.category,
-    required this.description,
-    required this.status,
-  });
+  super.key,
+  required this.bookId,
+  required this.image,
+  required this.title,
+  required this.author,
+  required this.year,
+  required this.category,
+  required this.description,
+  required this.status,
+});
 
   @override
   Widget build(BuildContext context) {
@@ -627,16 +628,9 @@ class BookCover extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                BookDetailPage(
-                  title: title,
-                  author: author,
-                  image: image,
-                  year: year,
-                  category: category,
-                  status: status,
-                  description: description,
-                ),
+            builder: (context) => BookDetailPage(
+  bookId: bookId,
+),
           ),
         );
       },
