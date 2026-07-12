@@ -1,0 +1,234 @@
+import 'package:flutter/material.dart';
+
+import '../core/app_theme.dart';
+import '../services/books_service.dart';
+import '../services/session_service.dart';
+
+class AddBookPage extends StatefulWidget {
+  const AddBookPage({super.key});
+
+  @override
+  State<AddBookPage> createState() => _AddBookPageState();
+}
+
+class _AddBookPageState extends State<AddBookPage> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _titleController = TextEditingController();
+  final _authorController = TextEditingController();
+  final _publisherController = TextEditingController();
+  final _categoryController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _coverUrlController = TextEditingController();
+
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _authorController.dispose();
+    _publisherController.dispose();
+    _categoryController.dispose();
+    _descriptionController.dispose();
+    _coverUrlController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveBook() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userId = await SessionService.getCurrentUserId();
+
+      await BooksService.createBook(
+        userId: userId,
+        title: _titleController.text.trim(),
+        author: _authorController.text.trim(),
+        publisher: _publisherController.text.trim().isEmpty
+            ? null
+            : _publisherController.text.trim(),
+        category: _categoryController.text.trim().isEmpty
+            ? null
+            : _categoryController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        coverUrl: _coverUrlController.text.trim().isEmpty
+            ? null
+            : _coverUrlController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Livro cadastrado com sucesso!'),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao cadastrar livro: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  InputDecoration _decoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: Colors.grey.shade300,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(
+          color: Color(0xFF3F5CCB),
+          width: 1.5,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text('Cadastrar Livro'),
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(18),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _titleController,
+                decoration: _decoration(
+                  'Título do livro',
+                  Icons.menu_book_outlined,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Informe o título do livro.';
+                  }
+
+                  return null;
+                },
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _authorController,
+                decoration: _decoration(
+                  'Autor',
+                  Icons.edit_outlined,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Informe o autor.';
+                  }
+
+                  return null;
+                },
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _publisherController,
+                decoration: _decoration(
+                  'Editora',
+                  Icons.apartment_outlined,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _categoryController,
+                decoration: _decoration(
+                  'Categoria',
+                  Icons.category_outlined,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _coverUrlController,
+                decoration: _decoration(
+                  'URL da capa',
+                  Icons.image_outlined,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _descriptionController,
+                maxLines: 4,
+                decoration: _decoration(
+                  'Descrição',
+                  Icons.notes_outlined,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _saveBook,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(
+                    _isLoading ? 'Salvando...' : 'Salvar livro',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
