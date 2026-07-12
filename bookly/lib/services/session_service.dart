@@ -1,6 +1,8 @@
 import 'users_service.dart';
 
 class SessionService {
+  static const String temporaryUserEmail = 'usuario@bookly.com';
+
   static Map<String, dynamic>? _currentUser;
 
   static Future<Map<String, dynamic>> getCurrentUser() async {
@@ -10,14 +12,18 @@ class SessionService {
 
     final users = await UsersService.listUsers();
 
-    if (users.isNotEmpty) {
-      _currentUser = users.first;
-      return _currentUser!;
+    for (final user in users) {
+      final email = user['email']?.toString();
+
+      if (email == temporaryUserEmail) {
+        _currentUser = user;
+        return _currentUser!;
+      }
     }
 
     _currentUser = await UsersService.createUser(
       name: 'Usuário Bookly',
-      email: 'usuario@bookly.com',
+      email: temporaryUserEmail,
       password: '123456',
     );
 
