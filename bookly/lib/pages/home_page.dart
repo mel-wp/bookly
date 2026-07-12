@@ -8,6 +8,7 @@ import '../services/loans_service.dart';
 import '../services/session_service.dart';
 import '../widgets/app_bottom_navigation.dart';
 import '../pages/new_loan_page.dart';
+import '../pages/loan_detail_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -348,15 +349,32 @@ const SizedBox(height: 15),
             final status = loan['status']?.toString() ?? 'PENDING';
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _LoanCard(
-                name: friendName,
-                book: bookTitle,
-                status: getStatusText(status),
-                statusColor: getStatusColor(status),
-                deadline: formatDate(loan['dueDate']?.toString()),
-              ),
-            );
+  padding: const EdgeInsets.only(bottom: 12),
+  child: InkWell(
+    borderRadius: BorderRadius.circular(18),
+    onTap: () async {
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LoanDetailPage(
+            loanId: loan['id'].toString(),
+          ),
+        ),
+      );
+
+      if (result == true) {
+        await loadHomeData();
+      }
+    },
+    child: _LoanCard(
+      name: friendName,
+      book: bookTitle,
+      status: getStatusText(status),
+      statusColor: getStatusColor(status),
+      deadline: formatDate(loan['dueDate']?.toString()),
+    ),
+  ),
+);
           }),
       ],
     );

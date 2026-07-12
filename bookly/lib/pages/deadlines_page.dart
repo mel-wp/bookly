@@ -4,6 +4,7 @@ import '../core/app_colors.dart';
 import '../services/loans_service.dart';
 import '../services/session_service.dart';
 import '../widgets/app_bottom_navigation.dart';
+import '../pages/loan_detail_page.dart';
 
 class DeadlinesPage extends StatefulWidget {
   const DeadlinesPage({super.key});
@@ -34,7 +35,11 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     });
 
     try {
-      final loadedLoans = await LoansService.listLoans();
+      final userId = await SessionService.getCurrentUserId();
+
+      final loadedLoans = await LoansService.listLoans(
+        userId: userId,
+      );
 
       if (!mounted) return;
 
@@ -429,19 +434,36 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
             final dueDate = formatDate(loan['dueDate']?.toString());
             final status = getVisualStatus(loan);
 
-            return _DeadlineCard(
-              friendName: friendName,
-              bookTitle: bookTitle,
-              dueDate: dueDate,
-              deadlineMessage: getDeadlineMessage(loan),
-              status: getStatusText(status),
-              statusColor: getStatusColor(status),
-              canMarkReturned: status != 'RETURNED',
-              isUpdating: isUpdating,
-              onMarkReturned: () {
-                markAsReturned(loan['id'].toString());
-              },
-            );
+            return InkWell(
+  borderRadius: BorderRadius.circular(18),
+  onTap: () async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LoanDetailPage(
+          loanId: loan['id'].toString(),
+        ),
+      ),
+    );
+
+    if (result == true) {
+      await loadLoans();
+    }
+  },
+  child: _DeadlineCard(
+    friendName: friendName,
+    bookTitle: bookTitle,
+    dueDate: dueDate,
+    deadlineMessage: getDeadlineMessage(loan),
+    status: getStatusText(status),
+    statusColor: getStatusColor(status),
+    canMarkReturned: status != 'RETURNED',
+    isUpdating: isUpdating,
+    onMarkReturned: () {
+      markAsReturned(loan['id'].toString());
+    },
+  ),
+);
           },
         ),
       ],
