@@ -16,7 +16,13 @@ class FriendsPage extends StatefulWidget {
 class _FriendsPageState extends State<FriendsPage> {
   final TextEditingController searchController = TextEditingController();
 
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController notesController = TextEditingController();
+
   bool isLoading = true;
+  bool isSaving = false;
   String search = '';
   String? errorMessage;
 
@@ -31,6 +37,10 @@ class _FriendsPageState extends State<FriendsPage> {
   @override
   void dispose() {
     searchController.dispose();
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    notesController.dispose();
     super.dispose();
   }
 
@@ -74,6 +84,277 @@ class _FriendsPageState extends State<FriendsPage> {
     if (result == true) {
       await loadFriends();
     }
+  }
+
+  Future<void> updateFriend(String friendId) async {
+    if (nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('O nome do amigo é obrigatório.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      isSaving = true;
+    });
+
+    try {
+      await FriendsService.updateFriend(
+        id: friendId,
+        name: nameController.text.trim(),
+        email: emailController.text.trim().isEmpty
+            ? null
+            : emailController.text.trim(),
+        phone: phoneController.text.trim().isEmpty
+            ? null
+            : phoneController.text.trim(),
+        notes: notesController.text.trim().isEmpty
+            ? null
+            : notesController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Amigo atualizado com sucesso!'),
+        ),
+      );
+
+      await loadFriends();
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao atualizar amigo: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
+    }
+  }
+
+  Future<void> deleteFriend(String friendId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Excluir amigo'),
+          content: const Text(
+            'Tem certeza que deseja excluir este amigo? Se ele tiver empréstimos vinculados, o backend pode impedir a exclusão.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              child: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await FriendsService.deleteFriend(friendId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Amigo excluído com sucesso!'),
+        ),
+      );
+
+      await loadFriends();
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao excluir amigo: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void openEditFriendSheet(Map<String, dynamic> friend) {
+    final friendId = friend['id'].toString();
+
+    nameController.text = friend['name']?.toString() ?? '';
+    emailController.text = friend['email']?.toString() ?? '';
+    phoneController.text = friend['phone']?.toString() ?? '';
+    notesController.text = friend['notes']?.toString() ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 18,
+            right: 18,
+            top: 18,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 18,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                  width: 45,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Editar amigo',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: nameController,
+                  decoration: decoration(
+                    'Nome',
+                    Icons.person_outline,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: decoration(
+                    'E-mail',
+                    Icons.email_outlined,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: decoration(
+                    'Telefone',
+                    Icons.phone_outlined,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: notesController,
+                  maxLines: 4,
+                  decoration: decoration(
+                    'Observações',
+                    Icons.notes_outlined,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          deleteFriend(friendId);
+                        },
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Excluir'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.all(15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: isSaving
+                            ? null
+                            : () {
+                                updateFriend(friendId);
+                              },
+                        icon: const Icon(Icons.save_outlined),
+                        label: const Text('Salvar'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  InputDecoration decoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: Colors.grey.shade300,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: AppColors.primary,
+          width: 1.5,
+        ),
+      ),
+    );
   }
 
   List<Map<String, dynamic>> get filteredFriends {
@@ -189,6 +470,9 @@ class _FriendsPageState extends State<FriendsPage> {
                         phone: phone,
                         notes: notes,
                         activeLoans: activeLoans,
+                        onTap: () {
+                          openEditFriendSheet(friend);
+                        },
                       );
                     },
                   ),
@@ -279,6 +563,7 @@ class _FriendCard extends StatelessWidget {
   final String? phone;
   final String? notes;
   final int activeLoans;
+  final VoidCallback onTap;
 
   const _FriendCard({
     required this.initials,
@@ -287,92 +572,111 @@ class _FriendCard extends StatelessWidget {
     required this.phone,
     required this.notes,
     required this.activeLoans,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: AppColors.secondary,
-            child: Text(
-              initials,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: AppColors.secondary,
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if (email != null && email!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      email!,
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                  if (phone != null && phone!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      phone!,
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                  if (notes != null && notes!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      notes!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
                   ),
-                ),
-                if (email != null && email!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    email!,
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                      fontSize: 13,
-                    ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ],
-                if (phone != null && phone!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    phone!,
+                  child: Text(
+                    '$activeLoans ativos',
                     style: TextStyle(
-                      color: Colors.grey[700],
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-                if (notes != null && notes!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    notes!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.grey[600],
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(height: 8),
+                Icon(
+                  Icons.edit_outlined,
+                  size: 18,
+                  color: Colors.grey[600],
+                ),
               ],
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: .12),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '$activeLoans ativos',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
