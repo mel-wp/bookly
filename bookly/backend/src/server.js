@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const path = require("path");
+const uploadRoutes = require("./routes/upload.routes");
 
 const usersRoutes = require('./routes/users.routes');
 const friendsRoutes = require('./routes/friends.routes');
@@ -11,6 +13,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static(path.resolve("uploads")));
+
 
 app.get('/', (req, res) => {
   return res.json({
@@ -22,6 +26,7 @@ app.use('/users', usersRoutes);
 app.use('/friends', friendsRoutes);
 app.use('/books', booksRoutes);
 app.use('/loans', loansRoutes);
+app.use("/upload", uploadRoutes);
 
 const PORT = process.env.PORT || 3000;
 

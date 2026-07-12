@@ -21,7 +21,6 @@ class _AddBookPageState extends State<AddBookPage> {
   final _authorController = TextEditingController();
   final _publisherController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _coverUrlController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -58,7 +57,6 @@ class _AddBookPageState extends State<AddBookPage> {
     _authorController.dispose();
     _publisherController.dispose();
     _descriptionController.dispose();
-    _coverUrlController.dispose();
     super.dispose();
   }
 
@@ -131,9 +129,7 @@ class _AddBookPageState extends State<AddBookPage> {
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        coverUrl: _coverUrlController.text.trim().isEmpty
-            ? null
-            : _coverUrlController.text.trim(),
+        coverUrl: null,
       );
 
       if (!mounted) return;
@@ -243,9 +239,34 @@ class _AddBookPageState extends State<AddBookPage> {
                 },
               ),
               const SizedBox(height: 14),
-              TextFormField(
-                controller: _coverUrlController,
-                decoration: _decoration('URL da capa', Icons.image_outlined),
+              Column(
+                children: [
+                  if (_selectedImage != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        _selectedImage!,
+                        height: 180,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+
+                  const SizedBox(height: 12),
+
+                  ElevatedButton.icon(
+                    onPressed: () => _pickImage(ImageSource.gallery),
+                    icon: const Icon(Icons.photo),
+                    label: const Text("Escolher da galeria"),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  ElevatedButton.icon(
+                    onPressed: () => _pickImage(ImageSource.camera),
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text("Tirar foto"),
+                  ),
+                ],
               ),
               const SizedBox(height: 14),
               TextFormField(
