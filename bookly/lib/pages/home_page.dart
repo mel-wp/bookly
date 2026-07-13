@@ -433,9 +433,9 @@ const SizedBox(height: 15),
     return _EmptyCard(
       icon: Icons.error_outline,
       title: 'Erro ao carregar dados',
-      description:
-          'Verifique se o backend está rodando em http://localhost:3000.\n\n$errorMessage',
-    );
+     description:
+    'Erro ao carregar os dados locais.\nTente fechar e abrir o aplicativo novamente.\n\n$errorMessage',
+     );
   }
 }
 

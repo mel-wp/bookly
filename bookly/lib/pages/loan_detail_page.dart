@@ -393,7 +393,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
           icon: Icons.error_outline,
           children: [
             Text(
-              'Verifique se o backend está rodando em http://localhost:3000.\n\n$errorMessage',
+              'Erro ao carregar os dados locais.',
               textAlign: TextAlign.center,
             ),
           ],
