@@ -8,8 +8,10 @@ const usersRoutes = require('./routes/users.routes');
 const friendsRoutes = require('./routes/friends.routes');
 const booksRoutes = require('./routes/books.routes');
 const loansRoutes = require('./routes/loans.routes');
+const authRoutes = require('./routes/auth.routes');
 
 const app = express();
+
 
 app.use(cors());
 app.use(express.json());
@@ -22,6 +24,7 @@ app.get('/', (req, res) => {
   });
 });
 
+app.use('/auth', authRoutes);
 app.use('/users', usersRoutes);
 app.use('/friends', friendsRoutes);
 app.use('/books', booksRoutes);
