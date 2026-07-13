@@ -1,21 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'pages/home_page.dart';
-import 'core/app_theme.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
-void main() {
-  runApp(const BooklyApp());
-}
+import 'app.dart';
 
-class BooklyApp extends StatelessWidget {
-  const BooklyApp({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Bookly',
-      theme: AppTheme.lightTheme,
-      home: const HomePage(),
-    );
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
   }
+
+  runApp(const BooklyApp());
 }

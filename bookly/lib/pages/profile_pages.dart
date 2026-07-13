@@ -382,7 +382,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _SettingsTile(
           icon: Icons.refresh,
           title: 'Atualizar dados',
-          subtitle: 'Buscar informações mais recentes do backend',
+          subtitle: 'Buscar informações mais recentes do banco local',
           onTap: loadProfileData,
         ),
         const SizedBox(height: 12),
@@ -422,9 +422,9 @@ class _ProfilePageState extends State<ProfilePage> {
       child: _EmptyCard(
         icon: Icons.error_outline,
         title: 'Erro ao carregar perfil',
-        description:
-            'Verifique se o backend está rodando em http://localhost:3000.\n\n$errorMessage',
-      ),
+       description:
+    'Erro ao carregar os dados locais.\nTente fechar e abrir o aplicativo novamente.\n\n$errorMessage',
+    ),
     );
   }
 }

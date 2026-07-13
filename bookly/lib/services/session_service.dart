@@ -34,4 +34,8 @@ class SessionService {
     final user = await getCurrentUser();
     return user['id'].toString();
   }
+
+  static void clearSession() {
+    _currentUser = null;
+  }
 }

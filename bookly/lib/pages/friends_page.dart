@@ -151,8 +151,8 @@ class _FriendsPageState extends State<FriendsPage> {
         return AlertDialog(
           title: const Text('Excluir amigo'),
           content: const Text(
-            'Tem certeza que deseja excluir este amigo? Se ele tiver empréstimos vinculados, o backend pode impedir a exclusão.',
-          ),
+           'Tem certeza que deseja excluir este amigo? Se ele tiver empréstimos vinculados, o aplicativo pode impedir a exclusão.',
+           ),
           actions: [
             TextButton(
               onPressed: () {
@@ -551,8 +551,8 @@ class _FriendsPageState extends State<FriendsPage> {
       icon: Icons.error_outline,
       title: 'Erro ao carregar amigos',
       description:
-          'Verifique se o backend está rodando em http://localhost:3000.\n\n$errorMessage',
-    );
+    'Erro ao carregar os dados locais.\nTente fechar e abrir o aplicativo novamente.\n\n$errorMessage',
+     );
   }
 }
 
