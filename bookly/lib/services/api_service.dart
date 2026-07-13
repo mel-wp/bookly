@@ -3,12 +3,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'http://10.0.2.2:3000';
 
   static Uri _buildUri(String endpoint, [Map<String, String>? queryParams]) {
-    return Uri.parse('$baseUrl$endpoint').replace(
-      queryParameters: queryParams,
-    );
+    return Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams);
   }
 
   static Future<dynamic> get(
@@ -63,19 +61,13 @@ class ApiService {
   }
 
   static Future<dynamic> delete(String endpoint) async {
-    final response = await http.delete(
-      _buildUri(endpoint),
-      headers: _headers,
-    );
+    final response = await http.delete(_buildUri(endpoint), headers: _headers);
 
     return _handleResponse(response);
   }
 
   static Map<String, String> get _headers {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
   }
 
   static dynamic _handleResponse(http.Response response) {

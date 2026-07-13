@@ -1,6 +1,31 @@
+import 'dart:io';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
 import 'api_service.dart';
 
 class BooksService {
+  static Future<String> uploadImage(File image) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${ApiService.baseUrl}/upload'),
+    );
+
+    request.files.add(await http.MultipartFile.fromPath('image', image.path));
+
+    final response = await request.send();
+
+    if (response.statusCode != 200) {
+      throw Exception('Erro ao enviar imagem');
+    }
+
+    final body = await response.stream.bytesToString();
+    final data = jsonDecode(body);
+
+    return data['imageUrl'];
+  }
+
   static Future<Map<String, dynamic>> createBook({
     required String userId,
     required String title,
@@ -74,10 +99,7 @@ class BooksService {
     if (coverUrl != null) body['coverUrl'] = coverUrl;
     if (available != null) body['available'] = available;
 
-    final response = await ApiService.put(
-      '/books/$id',
-      body: body,
-    );
+    final response = await ApiService.put('/books/$id', body: body);
 
     return Map<String, dynamic>.from(response);
   }
